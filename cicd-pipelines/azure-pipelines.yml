@@ -1,0 +1,210 @@
+trigger:
+  branches:
+    include:
+      - main
+      - release/*
+
+variables:
+  azureServiceConnection: 'AzureRM-EnterpriseConnection'
+  containerRegistry: 'enterpriseaicr.azurecr.io'
+  k8sNamespaceStaging: 'ai-scrum-staging'
+  k8sNamespaceProd: 'ai-scrum-production'
+  imageRepositoryGateway: 'gateway'
+  imageRepositorySprint: 'sprint-service'
+  imageRepositoryAIEngine: 'ai-engine'
+  imageRepositoryFrontend: 'frontend'
+
+stages:
+# ---------------------------------------------------------------------------
+# STAGE 1: Build & Unit Test Services (Parallel Execution)
+# ---------------------------------------------------------------------------
+- stage: BuildAndTest
+  displayName: 'Stage 1: Build & Test'
+  jobs:
+  - job: BuildJava
+    displayName: 'Spring Boot Compile & Test'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: JavaToolInstaller@0
+      inputs:
+        versionSource: 'local'
+        jdkSourceOption: 'LocalDirectory'
+        jdkFile: '/usr/lib/jvm/java-21-openjdk-amd64'
+    - script: |
+        cd backend-java
+        mvn clean package -DskipTests=false
+      displayName: 'Maven Package'
+
+  - job: BuildPython
+    displayName: 'FastAPI Engine Unit Tests'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.12'
+    - script: |
+        cd ai-engine-python
+        pip install -r requirements.txt
+        pytest
+      displayName: 'Run PyTests'
+
+  - job: BuildAngular
+    displayName: 'Frontend Angular Compilation'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '18.x'
+    - script: |
+        cd frontend-angular
+        npm ci
+        npm run build --prod
+      displayName: 'Build SPA'
+
+# ---------------------------------------------------------------------------
+# STAGE 2: Security & Static Vulnerability Scan
+# ---------------------------------------------------------------------------
+- stage: SecurityScan
+  displayName: 'Stage 2: Security Scan'
+  dependsOn: BuildAndTest
+  jobs:
+  - job: TrivyAndSAST
+    displayName: 'CodeQL & Trivy Dependency Scan'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - script: |
+        sudo apt-get install rpm
+        wget https://github.com/aquasecurity/trivy/releases/download/v0.49.1/trivy_0.49.1_Linux-64bit.deb
+        sudo dpkg -i trivy_0.49.1_Linux-64bit.deb
+        trivy fs --exit-code 1 --severity HIGH,CRITICAL .
+      displayName: 'Trivy File System Security Scan'
+
+# ---------------------------------------------------------------------------
+# STAGE 3: Build & Package Containers (ACR Push)
+# ---------------------------------------------------------------------------
+- stage: Package
+  displayName: 'Stage 3: Package Containers'
+  dependsOn: SecurityScan
+  jobs:
+  - job: PushImages
+    displayName: 'Build and Push 4 Docker Images'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: Docker@2
+      inputs:
+        containerRegistry: '$(azureServiceConnection)'
+        repository: '$(imageRepositoryGateway)'
+        command: 'buildAndPush'
+        Dockerfile: 'backend-java/spring-cloud-gateway/Dockerfile'
+        tags: |
+          $(Build.BuildId)
+          latest
+
+    - task: Docker@2
+      inputs:
+        containerRegistry: '$(azureServiceConnection)'
+        repository: '$(imageRepositorySprint)'
+        command: 'buildAndPush'
+        Dockerfile: 'backend-java/sprint-intelligence-service/Dockerfile'
+        tags: |
+          $(Build.BuildId)
+          latest
+
+    - task: Docker@2
+      inputs:
+        containerRegistry: '$(azureServiceConnection)'
+        repository: '$(imageRepositoryAIEngine)'
+        command: 'buildAndPush'
+        Dockerfile: 'ai-engine-python/Dockerfile'
+        tags: |
+          $(Build.BuildId)
+          latest
+
+    - task: Docker@2
+      inputs:
+        containerRegistry: '$(azureServiceConnection)'
+        repository: '$(imageRepositoryFrontend)'
+        command: 'buildAndPush'
+        Dockerfile: 'frontend-angular/Dockerfile'
+        tags: |
+          $(Build.BuildId)
+          latest
+
+# ---------------------------------------------------------------------------
+# STAGE 4: Deploy Staging Namespace
+# ---------------------------------------------------------------------------
+- stage: DeployStaging
+  displayName: 'Stage 4: Deploy Staging'
+  dependsOn: Package
+  jobs:
+  - job: HelmDeployStaging
+    displayName: 'Helm Install Staging'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: HelmDeploy@0
+      inputs:
+        connectionType: 'Kubernetes Service Connection'
+        kubernetesServiceConnection: 'AKS-Staging-Connection'
+        namespace: '$(k8sNamespaceStaging)'
+        command: 'upgrade'
+        chartType: 'FilePath'
+        chartPath: 'k8s-infrastructure/helm'
+        releaseName: 'ai-scrum-staging'
+        overrideValues: |
+          gateway.image.tag=$(Build.BuildId),sprintService.image.tag=$(Build.BuildId),aiEngine.image.tag=$(Build.BuildId),frontend.image.tag=$(Build.BuildId)
+        valueFile: 'k8s-infrastructure/helm/values.yaml'
+
+# ---------------------------------------------------------------------------
+# STAGE 5: Staging Integration Tests (QA Verification)
+# ---------------------------------------------------------------------------
+- stage: IntegrationTest
+  displayName: 'Stage 5: Staging Integration Tests'
+  dependsOn: DeployStaging
+  jobs:
+  - job: RunQASuite
+    displayName: 'Automated E2E QA Verification'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '18.x'
+    - script: |
+        npm install
+        node qa-test.js
+      displayName: 'Execute qa-test.js against Staging'
+
+# ---------------------------------------------------------------------------
+# STAGE 6: Controlled Production Release (HITL Approval Gate)
+# ---------------------------------------------------------------------------
+- stage: DeployProduction
+  displayName: 'Stage 6: Deploy Production'
+  dependsOn: IntegrationTest
+  jobs:
+  - deployment: HelmDeployProduction
+    displayName: 'Helm Release Production'
+    pool:
+      vmImage: 'ubuntu-latest'
+    environment: 'production-env' # Triggers human sign-off approval gate in Azure DevOps
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: HelmDeploy@0
+            inputs:
+              connectionType: 'Kubernetes Service Connection'
+              kubernetesServiceConnection: 'AKS-Production-Connection'
+              namespace: '$(k8sNamespaceProd)'
+              command: 'upgrade'
+              chartType: 'FilePath'
+              chartPath: 'k8s-infrastructure/helm'
+              releaseName: 'ai-scrum-production'
+              overrideValues: |
+                gateway.image.tag=$(Build.BuildId),sprintService.image.tag=$(Build.BuildId),aiEngine.image.tag=$(Build.BuildId),frontend.image.tag=$(Build.BuildId)
+              valueFile: 'k8s-infrastructure/helm/values.yaml'

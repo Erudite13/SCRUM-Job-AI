@@ -1,0 +1,56 @@
+{
+  "name": "AI Daily Standup Trigger",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": "cron",
+        "value": "0 9 * * 1-5"
+      },
+      "name": "Cron Trigger",
+      "type": "n8n-nodes-base.cron",
+      "position": [100, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://sprint-intelligence-service/api/v1/sprints/active/pre-scan",
+        "method": "POST"
+      },
+      "name": "Scan Active Boards",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [300, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://dsm-voice-service/api/v1/meetings/initiate",
+        "method": "POST"
+      },
+      "name": "Launch DSM Call Container",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [500, 300]
+    }
+  ],
+  "connections": {
+    "Cron Trigger": {
+      "main": [
+        [
+          {
+            "node": "Scan Active Boards",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scan Active Boards": {
+      "main": [
+        [
+          {
+            "node": "Launch DSM Call Container",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

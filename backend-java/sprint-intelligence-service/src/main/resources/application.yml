@@ -1,0 +1,76 @@
+server:
+  port: 8081
+  shutdown: graceful
+
+spring:
+  application:
+    name: sprint-intelligence-service
+
+  # R2DBC reactive connection pool
+  r2dbc:
+    url: r2dbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:scrummaster}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    pool:
+      initial-size: 5
+      max-size: 20
+      max-idle-time: 30m
+
+  # Flyway runs over JDBC at startup (R2DBC doesn't support DDL migrations)
+  flyway:
+    enabled: true
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:scrummaster}
+    user: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  # OAuth2 Resource Server (validates JWTs from Azure AD)
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://login.microsoftonline.com/${AZURE_TENANT_ID:common}/v2.0
+          audiences: ${AZURE_CLIENT_ID:api://sprint-intelligence}
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: non_null
+
+# Actuator & Prometheus
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus, metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+
+# Azure DevOps Integration
+azure:
+  devops:
+    organization: ${AZURE_DEVOPS_ORG:}
+    project: ${AZURE_DEVOPS_PROJECT:}
+    pat: ${AZURE_DEVOPS_PAT:}
+    api-version: "7.1"
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.enterprise.ai.sprint: DEBUG
+    org.springframework.r2dbc: INFO
+    org.springframework.security: INFO
+    io.r2dbc.postgresql: WARN
+  pattern:
+    console: "%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n"

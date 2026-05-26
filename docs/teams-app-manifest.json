@@ -1,0 +1,95 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.16/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.16",
+  "version": "1.0.0",
+  "id": "e47cd494-cde4-490a-b4a1-963757267b6d",
+  "packageName": "com.enterprise.ai.scrummaster",
+  "developer": {
+    "name": "Enterprise AI Systems Inc.",
+    "websiteUrl": "https://ai-scrum-master.enterprise.com",
+    "privacyUrl": "https://ai-scrum-master.enterprise.com/privacy",
+    "termsOfUseUrl": "https://ai-scrum-master.enterprise.com/terms"
+  },
+  "name": {
+    "short": "AI Autonomous Scrum Master",
+    "full": "Enterprise Autonomous AI Scrum Master and Sprint Intelligence Bot"
+  },
+  "description": {
+    "short": "AI Scrum Master coordinates Daily Standups, analyzes sprint risk, and synchronizes boards.",
+    "full": "Deeply integrated with Azure DevOps and Teams calling, this autonomous bot joins your Scrum ceremonies, transcribes verbal updates, maps blockers, and manages sprint backlogs automatically."
+  },
+  "icons": {
+    "outline": "ai-violet-icon.png",
+    "color": "ai-violet-icon-full.png"
+  },
+  "accentColor": "#0050cb",
+  "bots": [
+    {
+      "botId": "38313307-6955-8348-9557-c8c6c5c8c6c5",
+      "scopes": [
+        "personal",
+        "team",
+        "groupchat"
+      ],
+      "supportsFiles": false,
+      "isNotificationOnly": false,
+      "commandLists": [
+        {
+          "scopes": [
+            "team",
+            "groupchat"
+          ],
+          "commands": [
+            {
+              "title": "startstandup",
+              "description": "Trigger the voice-moderated Daily Standup meeting for the active sprint."
+            },
+            {
+              "title": "status",
+              "description": "Return current sprint burndown and predictive health metrics."
+            },
+            {
+              "title": "risks",
+              "description": "Output the active risk queue and bottleneck mitigations."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "configurableTabs": [
+    {
+      "configurationUrl": "https://ai-scrum.azurewebsites.net/teams/config",
+      "canUpdateConfiguration": true,
+      "scopes": [
+        "team",
+        "groupchat"
+      ]
+    }
+  ],
+  "staticTabs": [
+    {
+      "entityId": "sprintHealthTab",
+      "name": "Sprint Health",
+      "contentUrl": "https://ai-scrum.azurewebsites.net/index.html",
+      "websiteUrl": "https://ai-scrum.azurewebsites.net/index.html",
+      "scopes": [
+        "personal"
+      ]
+    }
+  ],
+  "permissions": [
+    "identityProvider",
+    "video",
+    "audio"
+  ],
+  "validDomains": [
+    "*.azurewebsites.net",
+    "login.microsoftonline.com",
+    "*.usercontent.google.com"
+  ],
+  "webApplicationInfo": {
+    "id": "e47cd494-cde4-490a-b4a1-963757267b6d",
+    "resource": "api://ai-scrum.azurewebsites.net/e47cd494-cde4-490a-b4a1-963757267b6d"
+  }
+}

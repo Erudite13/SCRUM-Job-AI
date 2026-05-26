@@ -1,0 +1,47 @@
+{
+  "timeZone": "America/New_York",
+  "dependencies": {
+    "enabledAdvancedServices": [
+      {
+        "userSymbol": "Calendar",
+        "serviceId": "calendar",
+        "version": "v3"
+      }
+    ]
+  },
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/calendar.readonly",
+    "https://www.googleapis.com/auth/meet.meetings.customers",
+    "https://www.googleapis.com/auth/script.external_request"
+  ],
+  "addOns": {
+    "common": {
+      "name": "AI Scrum Master Sidekick",
+      "logoUrl": "https://ai-scrum-master.enterprise.com/assets/ai-violet-icon.png",
+      "useLocaleFromApp": true,
+      "homepageTrigger": {
+        "runFunction": "loadHomepage",
+        "enabledSynergies": [
+          "MEET",
+          "CALENDAR"
+        ]
+      }
+    },
+    "meet": {
+      "homepageTrigger": {
+        "runFunction": "loadMeetSidePanel"
+      },
+      "meetingStartTrigger": {
+        "runFunction": "onMeetingStart"
+      },
+      "sidePanelUri": "https://ai-scrum.azurewebsites.net/dsm-console.html"
+    },
+    "calendar": {
+      "eventOpenTrigger": {
+        "runFunction": "onCalendarEventOpen"
+      }
+    }
+  }
+}

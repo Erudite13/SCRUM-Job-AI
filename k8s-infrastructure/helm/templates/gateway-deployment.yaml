@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-service
+  namespace: {{ .Values.global.namespace | default "ai-scrum-system" }}
+  labels:
+    app: gateway-service
+spec:
+  replicas: {{ .Values.gateway.replicaCount | default 2 }}
+  selector:
+    matchLabels:
+      app: gateway-service
+  template:
+    metadata:
+      labels:
+        app: gateway-service
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      containers:
+      - name: gateway
+        image: "{{ .Values.gateway.image.repository }}:{{ .Values.gateway.image.tag | default "latest" }}"
+        imagePullPolicy: {{ .Values.gateway.image.pullPolicy | default "IfNotPresent" }}
+        ports:
+        - containerPort: 8080
+          name: http
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          {{- toYaml .Values.gateway.resources | nindent 10 }}
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "production"
+        - name: SERVER_PORT
+          value: "8080"
+        - name: AZURE_TENANT_ID
+          value: {{ .Values.auth.azureTenantId | quote }}
+        - name: AZURE_CLIENT_ID
+          value: {{ .Values.auth.azureClientId | quote }}
+        - name: AZURE_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: auth-secrets
+              key: azure-ad-client-secret
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.gateway.probes.liveness.path | default "/actuator/health" }}
+            port: 8080
+          initialDelaySeconds: {{ .Values.gateway.probes.liveness.initialDelaySeconds | default 30 }}
+          periodSeconds: {{ .Values.gateway.probes.liveness.periodSeconds | default 15 }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.gateway.probes.readiness.path | default "/actuator/health" }}
+            port: 8080
+          initialDelaySeconds: {{ .Values.gateway.probes.readiness.initialDelaySeconds | default 20 }}
+          periodSeconds: {{ .Values.gateway.probes.readiness.periodSeconds | default 10 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-service
+  namespace: {{ .Values.global.namespace | default "ai-scrum-system" }}
+  labels:
+    app: gateway-service
+spec:
+  type: {{ .Values.gateway.service.type | default "ClusterIP" }}
+  ports:
+  - port: {{ .Values.gateway.service.port | default 8080 }}
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  selector:
+    app: gateway-service

@@ -1,0 +1,89 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: frontend-network-policy
+  namespace: {{ .Values.global.namespace | default "ai-scrum-system" }}
+spec:
+  podSelector:
+    matchLabels:
+      app: frontend-service
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector: {} # Allow any namespace ingress traffic
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: gateway-network-policy
+  namespace: {{ .Values.global.namespace | default "ai-scrum-system" }}
+spec:
+  podSelector:
+    matchLabels:
+      app: gateway-service
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: frontend-service
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: sprint-service
+    - podSelector:
+        matchLabels:
+          app: ai-engine-orchestrator
+    - podSelector:
+        matchLabels:
+          app: voice-engine
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: sprint-service-policy
+  namespace: {{ .Values.global.namespace | default "ai-scrum-system" }}
+spec:
+  podSelector:
+    matchLabels:
+      app: sprint-service
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: gateway-service
+    - podSelector:
+        matchLabels:
+          app: ai-engine-orchestrator
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: postgres
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres-policy
+  namespace: {{ .Values.global.namespace | default "ai-scrum-system" }}
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: sprint-service
+    - podSelector:
+        matchLabels:
+          app: ai-engine-orchestrator

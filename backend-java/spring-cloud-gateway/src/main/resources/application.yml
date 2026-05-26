@@ -1,0 +1,51 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      default-filters:
+        - TokenRelay
+      routes:
+        - id: sprint-intelligence
+          uri: lb://sprint-intelligence-service
+          predicates:
+            - Path=/api/v1/sprints/**, /api/v1/sprints/approvals/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: sprintServiceCircuitBreaker
+                fallbackUri: forward:/fallback/sprints
+        - id: ai-orchestration
+          uri: http://ai-engine-orchestrator:8000
+          predicates:
+            - Path=/api/v1/ai/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: aiEngineCircuitBreaker
+                fallbackUri: forward:/fallback/ai
+
+  security:
+    oauth2:
+      client:
+        provider:
+          azure-ad:
+            issuer-uri: https://login.microsoftonline.com/${AZURE_TENANT_ID}/v2.0
+        registration:
+          azure-ad:
+            client-id: ${AZURE_CLIENT_ID}
+            client-secret: ${AZURE_CLIENT_SECRET}
+            scope: openid, profile, email, offline_access
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true

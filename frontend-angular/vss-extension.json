@@ -1,0 +1,64 @@
+{
+    "manifestVersion": 1,
+    "id": "ai-scrum-master-extension",
+    "version": "1.0.0",
+    "name": "AI Autonomous Scrum Master Platform",
+    "description": "Enterprise AI-powered Agile operations, sprint predictions, and meeting moderator.",
+    "publisher": "EnterpriseAI",
+    "targets": [
+        {
+            "id": "Microsoft.VisualStudio.Services"
+        }
+    ],
+    "scopes": [
+        "vso.work_write",
+        "vso.code_write",
+        "vso.build_execute",
+        "vso.test_write"
+    ],
+    "categories": [
+        "Azure Boards"
+    ],
+    "content": {
+        "details": {
+            "markdown": "README.md"
+        }
+    },
+    "links": {
+        "home": {
+            "uri": "https://github.com/enterprise-ai/scrum-master-platform"
+        }
+    },
+    "branding": {
+        "color": "#0050cb",
+        "theme": "light"
+    },
+    "icon": "images/ai-violet-icon.png",
+    "contributions": [
+        {
+            "id": "ai-scrum-command-hub",
+            "type": "ms.vss-web.hub",
+            "targets": [
+                "ms.vss-work-web.work-hub-group"
+            ],
+            "properties": {
+                "name": "AI Scrum Center",
+                "uri": "dist/index.html",
+                "icon": "images/ai-violet-icon.png",
+                "supportsMobile": true
+            }
+        },
+        {
+            "id": "ai-dsm-live-hub",
+            "type": "ms.vss-web.hub",
+            "targets": [
+                "ms.vss-work-web.work-hub-group"
+            ],
+            "properties": {
+                "name": "DSM Live Console",
+                "uri": "dist/dsm-console.html",
+                "icon": "images/dsm-icon.png"
+            }
+        }
+    ]
+}

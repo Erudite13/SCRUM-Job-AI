@@ -1,0 +1,71 @@
+# Dependency directories
+node_modules/
+jspm_packages/
+web_packages/
+
+# Python environment and build
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.venv
+venv/
+ENV/
+env/
+python_env/
+
+# Java Spring Boot build
+target/
+*.class
+*.jar
+*.war
+*.nar
+*.ear
+*.db
+*.log
+.mvn/
+.gradle/
+build/
+
+# IDEs and editors
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.project
+.classpath
+.settings/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Credentials & environment secrets
+.env
+.env.*
+*.pem
+*.key
+secrets.xml
+*.pat
+secret-values.yaml

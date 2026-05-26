@@ -1,0 +1,143 @@
+<div class="min-h-screen bg-surface p-xl font-sans text-on-surface">
+  <!-- Top Navigation & Title Bar -->
+  <div class="flex items-center justify-between mb-xl bg-surface-lowest/70 backdrop-blur-md border border-secondary/20 p-md rounded-md shadow-ambient">
+    <div>
+      <span class="text-xs uppercase tracking-wider font-semibold text-tertiary font-mono">Autonomous Agile Swarm</span>
+      <h1 class="text-2xl font-bold font-sans text-on-surface flex items-center gap-sm">
+        AI Sprint Intelligence Hub
+        <span class="w-2.5 h-2.5 rounded-full bg-success animate-pulse" title="System Live"></span>
+      </h1>
+    </div>
+    <div class="flex items-center gap-md">
+      <div class="flex flex-col text-right">
+        <span class="text-xs text-on-surfaceVariant font-mono">Current Sprint</span>
+        <span class="font-bold text-primary font-sans">Sprint 24 (Active)</span>
+      </div>
+      <button class="bg-primary hover:bg-primary-container text-white px-md py-sm rounded-sm font-semibold text-sm transition-all duration-200 shadow-sm">
+        Sync Azure DevOps
+      </button>
+    </div>
+  </div>
+
+  <!-- Primary Dashboard Grid -->
+  <div class="grid grid-cols-12 gap-lg">
+    
+    <!-- Left Column: KPI Cards (Conf score, velocity, blockers) -->
+    <div class="col-span-12 lg:col-span-4 flex flex-col gap-lg">
+      
+      <!-- AI Sprint Confidence Card -->
+      <div class="bg-surface-lowest p-lg rounded-lg border border-secondary/20 shadow-ambient relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-24 h-24 bg-tertiary/10 rounded-full blur-xl"></div>
+        <div class="flex items-center justify-between mb-md">
+          <h2 class="text-sm font-semibold text-secondary uppercase tracking-wider font-mono">AI Sprint Confidence</h2>
+          <span class="text-xs text-tertiary font-mono">Updated Live</span>
+        </div>
+        <div class="flex items-baseline gap-xs my-sm">
+          <span class="text-5xl font-extrabold text-on-surface font-sans">{{ confidenceScore$ | async }}%</span>
+          <span class="text-sm font-semibold text-success font-mono">▲ Stable</span>
+        </div>
+        <p class="text-xs text-on-surfaceVariant leading-relaxed mt-xs">
+          Engineered model predicts a 94.2% completion probability based on PR cycles, build pipelines, and current developer loads.
+        </p>
+        <div class="w-full bg-surface-container h-1.5 rounded-full mt-md">
+          <div class="bg-tertiary h-1.5 rounded-full shadow-ai-glow transition-all duration-500" [style.width.%]="confidenceScore$ | async"></div>
+        </div>
+      </div>
+
+      <!-- Live Blockers Indicator -->
+      <div class="bg-surface-lowest p-lg rounded-lg border border-secondary/20 shadow-ambient">
+        <div class="flex items-center justify-between mb-md">
+          <h2 class="text-sm font-semibold text-secondary uppercase tracking-wider font-mono">Active Blockers</h2>
+          <span class="text-xs text-critical font-mono font-bold">Action Needed</span>
+        </div>
+        <div class="flex items-baseline gap-xs my-sm">
+          <span class="text-5xl font-extrabold text-critical font-mono">{{ blockersCount$ | async }}</span>
+          <span class="text-xs text-on-surfaceVariant font-mono">Unresolved Items</span>
+        </div>
+        <div class="flex items-center gap-sm mt-md p-sm bg-red-50 border border-red-200/50 rounded-sm">
+          <div class="w-2 h-2 rounded-full bg-red-500 animate-ping"></div>
+          <p class="text-xs text-red-800 font-medium">
+            2 items inactive for over 48 hours without update comments.
+          </p>
+        </div>
+      </div>
+
+      <!-- Velocity Trend Forecasting -->
+      <div class="bg-surface-lowest p-lg rounded-lg border border-secondary/20 shadow-ambient">
+        <h2 class="text-sm font-semibold text-secondary uppercase tracking-wider font-mono mb-md">Velocity Trend</h2>
+        <div class="flex items-baseline gap-xs my-sm">
+          <span class="text-5xl font-extrabold text-on-surface font-sans">{{ velocityTrend$ | async }}</span>
+          <span class="text-xs text-on-surfaceVariant font-mono">Story Points / Sprint</span>
+        </div>
+        <p class="text-xs text-on-surfaceVariant leading-relaxed">
+          Historical sprint velocity is 42 points. AI capacity model recommends matching Sprint 24 load to 40 points to avoid developer burnout.
+        </p>
+      </div>
+
+    </div>
+
+    <!-- Right Column: Burndown & AI Risk Mitigation Engine -->
+    <div class="col-span-12 lg:col-span-8 flex flex-col gap-lg">
+      
+      <!-- Sprint Burndown Placeholder (Glassmorphic Container) -->
+      <div class="bg-surface-lowest p-lg rounded-lg border border-secondary/20 shadow-ambient flex-1 min-h-[300px]">
+        <div class="flex items-center justify-between mb-lg">
+          <div>
+            <h2 class="text-lg font-bold font-sans">Sprint Burndown Tracking</h2>
+            <p class="text-xs text-on-surfaceVariant font-mono">Ideal vs Actual & Predicted completion path</p>
+          </div>
+          <div class="flex items-center gap-md text-xs font-mono">
+            <span class="flex items-center gap-xs"><span class="w-3 h-0.5 bg-secondary"></span> Ideal Guideline</span>
+            <span class="flex items-center gap-xs"><span class="w-3 h-0.5 bg-primary"></span> Actual Burn</span>
+            <span class="flex items-center gap-xs"><span class="w-3 h-0.5 bg-tertiary border-dashed"></span> AI Prediction</span>
+          </div>
+        </div>
+        
+        <!-- Interactive Chart Visualizer Placeholder -->
+        <div class="w-full h-48 border border-dashed border-secondary/30 rounded-md bg-surface-low/50 flex flex-col items-center justify-center p-md text-center">
+          <span class="text-tertiary text-2xl mb-sm font-mono font-bold">Chart Vector Space Active</span>
+          <p class="text-xs text-on-surfaceVariant max-w-sm">
+            Interactive burndown vectors rendering successfully. Velocity burn-rate standard is aligned with targets.
+          </p>
+        </div>
+      </div>
+
+      <!-- AI Risk & Mitigation Control Center (HITL) -->
+      <div class="bg-surface-lowest p-lg rounded-lg border border-tertiary/20 shadow-ambient relative">
+        <div class="absolute -top-3 left-6 px-sm py-xs bg-tertiary text-white font-mono text-[10px] font-bold rounded-sm tracking-widest uppercase">
+          AI Risk engine (Human-In-The-Loop)
+        </div>
+        <div class="mb-md mt-sm">
+          <h2 class="text-md font-bold font-sans">Proactive Risk Mitigation Queue</h2>
+          <p class="text-xs text-on-surfaceVariant leading-relaxed mt-xs">
+            The AI Scrum Master detected the following engineering risks. Appoint mitigation to update Azure Boards automatically.
+          </p>
+        </div>
+
+        <div class="flex flex-col gap-sm">
+          <div *ngFor="let risk of activeRisks$ | async" 
+               class="flex items-center justify-between p-md bg-surface-low border border-secondary/15 rounded-md hover:border-tertiary/30 transition-all duration-200">
+            <div class="flex items-center gap-md">
+              <span [class]="getSeverityBadgeClass(risk.severity)" class="text-[10px] font-bold px-sm py-xs rounded-full font-mono">
+                {{ risk.severity }}
+              </span>
+              <div>
+                <h4 class="text-sm font-bold text-on-surface leading-tight">{{ risk.title }}</h4>
+                <p class="text-xs text-on-surfaceVariant mt-xs font-mono">
+                  Assignee: {{ risk.assignedTo }} • Inactive for {{ risk.daysStale }} days
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center gap-sm">
+              <button (click)="executeRiskMitigation(risk.id)" 
+                      class="bg-tertiary hover:bg-tertiary-container text-white px-md py-sm rounded-sm text-xs font-semibold shadow-sm transition-all duration-200 font-sans">
+                Approve Action
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

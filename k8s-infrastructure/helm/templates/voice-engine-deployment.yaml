@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: voice-engine
+  namespace: {{ .Values.global.namespace | default "ai-scrum-system" }}
+  labels:
+    app: voice-engine
+spec:
+  replicas: {{ .Values.voiceEngine.replicaCount | default 2 }}
+  selector:
+    matchLabels:
+      app: voice-engine
+  template:
+    metadata:
+      labels:
+        app: voice-engine
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      containers:
+      - name: voice-engine
+        image: "{{ .Values.voiceEngine.image.repository }}:{{ .Values.voiceEngine.image.tag | default "latest" }}"
+        imagePullPolicy: {{ .Values.voiceEngine.image.pullPolicy | default "IfNotPresent" }}
+        ports:
+        - containerPort: 8001
+          name: websocket
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          {{- toYaml .Values.voiceEngine.resources | nindent 10 }}
+        env:
+        - name: AZURE_SPEECH_KEY
+          valueFrom:
+            secretKeyRef:
+              name: voice-secrets
+              key: azure-speech-key
+        - name: AZURE_SPEECH_REGION
+          value: {{ .Values.voiceEngine.env.AZURE_SPEECH_REGION | default "eastus" | quote }}
+        - name: AZURE_OPENAI_ENDPOINT
+          value: {{ .Values.voiceEngine.env.AZURE_OPENAI_ENDPOINT | quote }}
+        - name: AZURE_OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-secrets
+              key: azure-openai-key
+        - name: SPRINT_SERVICE_URL
+          value: "http://sprint-service:8081"
+        livenessProbe:
+          tcpSocket:
+            port: 8001
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          tcpSocket:
+            port: 8001
+          initialDelaySeconds: 10
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: voice-engine
+  namespace: {{ .Values.global.namespace | default "ai-scrum-system" }}
+  labels:
+    app: voice-engine
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8001
+    targetPort: 8001
+    protocol: TCP
+    name: websocket
+  selector:
+    app: voice-engine

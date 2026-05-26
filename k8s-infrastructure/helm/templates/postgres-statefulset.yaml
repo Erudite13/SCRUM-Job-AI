@@ -1,0 +1,83 @@
+{{- if .Values.postgresql.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: {{ .Values.global.namespace | default "ai-scrum-system" }}
+  labels:
+    app: postgres
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      securityContext:
+        fsGroup: 999
+      initContainers:
+      - name: install-pgvector
+        image: postgres:16-alpine
+        command: ["sh", "-c", "apk add --no-cache git make gcc clang15-dev llvm15-dev musl-dev && git clone --branch v0.5.1 https://github.com/pgvector/pgvector.git /tmp/pgvector && cd /tmp/pgvector && make && make install"]
+        volumeMounts:
+        - name: pg-data
+          mountPath: /var/lib/postgresql/data
+      containers:
+      - name: postgres
+        image: postgres:16-alpine
+        ports:
+        - containerPort: 5432
+          name: db
+        env:
+        - name: POSTGRES_DB
+          value: {{ .Values.postgresql.database | default "aiscrum" | quote }}
+        - name: POSTGRES_USER
+          value: {{ .Values.postgresql.username | default "postgres" | quote }}
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: database-password
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+          requests:
+            cpu: "500m"
+            memory: 1Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: pg-data
+          mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+  - metadata:
+      name: pg-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: {{ .Values.postgresql.storage | default "20Gi" }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: {{ .Values.global.namespace | default "ai-scrum-system" }}
+  labels:
+    app: postgres
+spec:
+  ports:
+  - port: 5432
+    targetPort: 5432
+    name: db
+  selector:
+    app: postgres
+{{- end }}

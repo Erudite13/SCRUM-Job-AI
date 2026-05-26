@@ -1,0 +1,24 @@
+apiVersion: v2
+name: ai-scrum-master
+description: Enterprise AI Scrum Master Platform - Helm Chart for Kubernetes deployment
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+
+keywords:
+  - ai
+  - scrum
+  - devops
+  - spring-boot
+  - fastapi
+  - microservices
+
+maintainers:
+  - name: AI Scrum Master Platform Team
+    email: platform-team@enterprise.com
+
+home: https://github.com/enterprise/ai-scrum-master
+sources:
+  - https://github.com/enterprise/ai-scrum-master
+
+dependencies: []

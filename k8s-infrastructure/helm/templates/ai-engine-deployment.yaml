@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-engine-orchestrator
+  namespace: ai-scrum-system
+  labels:
+    app: ai-engine-orchestrator
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ai-engine-orchestrator
+  template:
+    metadata:
+      labels:
+        app: ai-engine-orchestrator
+    spec:
+      containers:
+      - name: main
+        image: enterpriseaicr.azurecr.io/ai-engine:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+        resources:
+          limits:
+            cpu: "2"
+            memory: 4Gi
+          requests:
+            cpu: "1"
+            memory: 2Gi
+        env:
+        - name: AZURE_OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-secrets
+              key: azure-openai-key
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: connection-string
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8000
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8000
+          initialDelaySeconds: 20
+          periodSeconds: 20
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ai-engine-hpa
+  namespace: ai-scrum-system
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ai-engine-orchestrator
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 75

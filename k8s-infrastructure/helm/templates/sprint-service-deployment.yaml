@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sprint-service
+  namespace: {{ .Values.global.namespace | default "ai-scrum-system" }}
+  labels:
+    app: sprint-service
+spec:
+  replicas: {{ .Values.sprintService.replicaCount | default 2 }}
+  selector:
+    matchLabels:
+      app: sprint-service
+  template:
+    metadata:
+      labels:
+        app: sprint-service
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      containers:
+      - name: sprint-service
+        image: "{{ .Values.sprintService.image.repository }}:{{ .Values.sprintService.image.tag | default "latest" }}"
+        imagePullPolicy: {{ .Values.sprintService.image.pullPolicy | default "IfNotPresent" }}
+        ports:
+        - containerPort: 8081
+          name: http
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          {{- toYaml .Values.sprintService.resources | nindent 10 }}
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "production"
+        - name: SERVER_PORT
+          value: "8081"
+        - name: DB_HOST
+          value: "postgres"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_NAME
+          value: {{ .Values.postgresql.database | default "aiscrum" | quote }}
+        - name: DB_USER
+          value: {{ .Values.postgresql.username | default "postgres" | quote }}
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: database-password
+        - name: AZURE_DEVOPS_ORG
+          value: {{ .Values.sprintService.env.AZURE_DEVOPS_ORG | quote }}
+        - name: AZURE_DEVOPS_PROJECT
+          value: {{ .Values.sprintService.env.AZURE_DEVOPS_PROJECT | quote }}
+        - name: AZURE_DEVOPS_PAT
+          valueFrom:
+            secretKeyRef:
+              name: devops-secrets
+              key: azure-devops-pat
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.sprintService.probes.liveness.path | default "/actuator/health" }}
+            port: 8081
+          initialDelaySeconds: {{ .Values.sprintService.probes.liveness.initialDelaySeconds | default 30 }}
+          periodSeconds: {{ .Values.sprintService.probes.liveness.periodSeconds | default 15 }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.sprintService.probes.readiness.path | default "/actuator/health" }}
+            port: 8081
+          initialDelaySeconds: {{ .Values.sprintService.probes.readiness.initialDelaySeconds | default 20 }}
+          periodSeconds: {{ .Values.sprintService.probes.readiness.periodSeconds | default 10 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sprint-service
+  namespace: {{ .Values.global.namespace | default "ai-scrum-system" }}
+  labels:
+    app: sprint-service
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8081
+    targetPort: 8081
+    protocol: TCP
+    name: http
+  selector:
+    app: sprint-service
